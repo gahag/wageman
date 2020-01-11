@@ -1,0 +1,15 @@
+version: "3"
+
+services:
+  build:
+    build:
+      context: .
+      dockerfile: dockerfile
+      args:
+        name: wageman
+        from: rust:latest
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    command: cargo build
+    volumes:
+      - ./:/usr/src/wageman/
