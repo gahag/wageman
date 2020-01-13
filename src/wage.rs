@@ -1,4 +1,5 @@
 use std::fmt;
+use std::iter::Peekable;
 
 use crate::enumit::EnumIter;
 
@@ -24,6 +25,13 @@ pub struct Wage {
 	pub value: f64,
 	pub prefix: Prefix,
 	pub unit: Unit
+}
+
+#[derive(Debug, Clone)]
+pub struct WageIter {
+	base: Wage,
+	prefix: EnumIter<Prefix>,
+	unit: Peekable<EnumIter<Unit>>
 }
 
 
@@ -89,5 +97,51 @@ impl Unit {
 		];
 
 		EnumIter::new(VARIANTS)
+	}
+}
+
+
+impl Iterator for WageIter {
+	type Item = Wage;
+
+	fn next(&mut self) -> Option<Self::Item> {
+		let prefix = match self.prefix.next() {
+			Some(p) => p,
+			None => {
+				self.unit.next();
+				self.prefix = Prefix::iter();
+				self.prefix.next().expect("prefix enum iter empty")
+			}
+		};
+
+		let unit = self.unit.peek()?.clone();
+
+		return Some(
+			Wage {
+				prefix: prefix,
+				unit: unit,
+				value: self.base.value * prefix.to_hours(unit) as f64
+			}
+		)
+	}
+}
+
+impl Wage {
+	pub fn variations(self) -> WageIter {
+		WageIter {
+			base: Wage {
+				prefix: Prefix::iter()
+				               .next()
+				               .expect("prefix enum iter empty"),
+
+				unit: Unit::iter()
+				           .next()
+				           .expect("unit enum iter empty"),
+
+				value: self.value / self.prefix.to_hours(self.unit) as f64
+			},
+			prefix: Prefix::iter(),
+			unit: Unit::iter().peekable()
+		}
 	}
 }

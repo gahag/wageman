@@ -1,5 +1,4 @@
 mod args;
-mod convert;
 mod wage;
 mod enumit;
 
@@ -8,7 +7,7 @@ use std::io::{self, Write};
 use std::process;
 
 use crate::args::Command;
-use crate::wage::{Prefix, Unit, Wage};
+use crate::wage::Wage;
 
 
 fn main() {
@@ -49,16 +48,19 @@ fn convert(wage: Wage) -> io::Result<()>{
 	let stdout = io::stdout();
 	let mut stdout = stdout.lock();
 
-	let wages = convert::to_all(wage);
+	writeln!(stdout, "Wages:")?;
 
-	for unit in Unit::iter() {
-		writeln!(stdout, "{}:", unit)?;
+	let mut unit = None; // used to group output by unit.
 
-		for prefix in Prefix::iter() {
-			writeln!(stdout, "{}\t${}", prefix, wages[&unit][&prefix])?;
+	for wage in wage.variations() {
+		if unit.map(|u| u != wage.unit).unwrap_or(true) {
+			unit = Some(wage.unit);
+
+			writeln!(stdout, "")?;
+			writeln!(stdout, "{}:", wage.unit)?;
 		}
 
-		writeln!(stdout, "")?;
+		writeln!(stdout, "{}\t${:.2}", wage.prefix, wage.value)?;
 	}
 
 	Ok(())

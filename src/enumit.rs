@@ -1,3 +1,4 @@
+#[derive(Debug, Clone)]
 pub struct EnumIter<T: 'static + Copy>(
 	std::iter::Copied<std::slice::Iter<'static, T>>
 );
